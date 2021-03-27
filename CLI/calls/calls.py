@@ -162,7 +162,7 @@ class Wc(GenCall):
 class Pwd(GenCall):
 
     def execute(self, input: Optional[StringIO], mem: dict) -> Tuple[Optional[StringIO], str]:
-        return StringIO(self.substitute_str("${PWD}", mem)), ""
+        return StringIO(os.getcwd()), ""
 
 
 class Exit(GenCall):
@@ -312,6 +312,64 @@ class Grep(GenCall):
         return out, err  # "Executing grep command with " + str(self.parsed_args) + f"\nerr = {err}"
 
 
+class CD(GenCall):
+
+    def execute(self, input: Optional[StringIO], mem: dict) -> Tuple[Optional[StringIO], str]:
+        err = ""
+
+        if self.args and input is not None:
+            try:
+                path = input.getvalue()
+                os.chdir(path)
+                return None, err
+            except (NotADirectoryError, FileNotFoundError) as e:
+                err += str(e)
+                return None, err
+
+        if self.args:
+            try:
+                os.chdir(self.args[0])
+            except (NotADirectoryError, FileNotFoundError) as e:
+                err += str(e)
+
+        return None, err
+
+
+class LS(GenCall):
+    def execute(self, input: Optional[StringIO], mem: dict) -> Tuple[Optional[StringIO], str]:
+        out = StringIO()
+        err = ""
+        if not self.args and input is not None:
+            try:
+                path = input.getvalue()
+                files = os.listdir(path)
+                out.write(" ".join(files))
+                return out, err
+            except (NotADirectoryError, FileNotFoundError) as e:
+                err += str(e)
+                return out, err
+
+        if self.args:
+            try:
+                path = self.args[0]
+                files = os.listdir(path)
+                out.write(" ".join(files))
+                return out, err
+            except (NotADirectoryError, FileNotFoundError) as e:
+                err += str(e)
+                return out, err
+
+        try:
+            path = '.'
+            files = os.listdir(path)
+            out.write(" ".join(files))
+            return out, err
+        except (NotADirectoryError, FileNotFoundError) as e:
+            err += str(e)
+
+        return out, err
+
+
 GenCall.cmd_dict = {  # type: ignore
     "echo": Echo,
     "wc": Wc,
@@ -319,6 +377,8 @@ GenCall.cmd_dict = {  # type: ignore
     "exit": Exit,
     "cat": Cat,
     "grep": Grep,
+    "cd": CD,
+    "ls": LS
 }
 
 

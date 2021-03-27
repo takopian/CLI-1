@@ -4,7 +4,7 @@ from typing import Callable
 sys.path.insert(0, '..')
 
 from CLI import CliTransformer, cli_parser, Exit, Cat
-from CLI import Echo, Wc, Pwd
+from CLI import Echo, Wc, Pwd, LS, CD
 
 
 def parse_test(input_text, verify: Callable) -> None:
@@ -56,6 +56,26 @@ def test_simple_pwd_cmd():
 def test_simple_cat_cmd():
     parse_test("cat parse_test.py",
                lambda cmd: verify_cmd(cmd, [Cat("cat", *("parse_test.py",))]))
+
+
+def test_simple_ls_cmd():
+    parse_test("ls",
+               lambda cmd: verify_cmd(cmd, [LS("ls")]))
+
+
+def test_simple_ls_cmd_2():
+    parse_test("ls ..",
+               lambda cmd: verify_cmd(cmd, [LS("ls", *("..",))]))
+
+
+def test_simple_ls_cmd_3():
+    parse_test("pwd | ls",
+               lambda cmd: verify_cmd(cmd, [Pwd("pwd"), LS("ls")]))
+
+
+def test_simple_cd_cmd():
+    parse_test("cd ..",
+               lambda cmd: verify_cmd(cmd, [CD("cd", *("..",))]))
 
 # parse_test("echo 1 2 3",
 #            lambda cmd: (isinstance(cmd, calls.Echo),
